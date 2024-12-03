@@ -12,7 +12,7 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 환경 변수 설정 (PDF 디렉토리)
-ENV PDF_FOLDER=/home/ubuntu/pdf
+ENV PDF_FOLDER=/app/pdf
 
 # 포트 열기
 EXPOSE 5000

@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  flask-pdf-server:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ${HOME}/pdf:/app/pdf
+    environment:
+      - PDF_FOLDER=/app/pdf
