@@ -2,7 +2,7 @@ from flask import Flask, send_from_directory, render_template
 from flask_talisman import Talisman
 from collections import defaultdict
 import os
-from model.SQLiteManagerORM import SQLiteManagerORM
+from model.SQLiteManagerORM import SQLiteManagerSQL
 
 app = Flask(__name__)
 
@@ -25,12 +25,12 @@ if not os.path.exists(PDF_FOLDER):
 
 # DB에서 가져온 데이터를 날짜별, 회사별로 그룹화
 def group_reports_by_date_and_firm():
-    db = SQLiteManagerORM()
+    db = SQLiteManagerSQL()
     
     # DB에서 데이터 가져오기
     rows = db.fetch_daily_articles_by_date()
     print(f"DB에서 가져온 데이터: {rows}")
-    db.close_session()
+    db.close_connection()
     
     grouped = defaultdict(lambda: defaultdict(list))
     

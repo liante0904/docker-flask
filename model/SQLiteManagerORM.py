@@ -1,49 +1,21 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, func, update, and_, or_
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from datetime import datetime, timedelta
+import sqlite3
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
 
 SQLITE_PATH = os.getenv('SQLITE_PATH')
-
 db_path = os.path.expanduser(SQLITE_PATH)
-Base = declarative_base()
-engine = create_engine(f'sqlite:///{db_path}', echo=True)
-Session = sessionmaker(bind=engine)
-session = Session()
 
-# Define ORM model for data_main_daily_send
-class DataMainDailySend(Base):
-    __tablename__ = 'data_main_daily_send'
-
-    id = Column(Integer, primary_key=True)
-    SEC_FIRM_ORDER = Column(Integer, nullable=False)
-    ARTICLE_BOARD_ORDER = Column(Integer, nullable=False)
-    FIRM_NM = Column(String(255), nullable=False)
-    REG_DT = Column(String(8))
-    ATTACH_URL = Column(Text)
-    ARTICLE_TITLE = Column(Text)
-    ARTICLE_URL = Column(Text)
-    MAIN_CH_SEND_YN = Column(String(1), default='N')
-    DOWNLOAD_URL = Column(Text)
-    WRITER = Column(String(255))
-    SAVE_TIME = Column(DateTime)
-    TELEGRAM_URL = Column(Text)
-    KEY = Column(String(255), unique=True)
-
-# Ensure the table exists
-Base.metadata.create_all(engine)
-
-class SQLiteManagerORM:
+class SQLiteManagerSQL:
     def __init__(self):
-        self.session = Session()
+        self.conn = sqlite3.connect(db_path)
+        self.cursor = self.conn.cursor()
 
-    def close_session(self):
-        self.session.close()
+    def close_connection(self):
+        self.conn.close()
 
     def insert_data(self, data_list):
         """Insert or update data in the database."""
@@ -51,65 +23,85 @@ class SQLiteManagerORM:
         updated_count = 0
 
         for entry in data_list:
-            stmt = update(DataMainDailySend).where(DataMainDailySend.KEY == entry['KEY']).values(
-                REG_DT=entry.get('REG_DT', ''),
-                WRITER=entry.get('WRITER', ''),
-                DOWNLOAD_URL=entry.get('DOWNLOAD_URL', None),
-                TELEGRAM_URL=entry.get('TELEGRAM_URL', None)
-            ).execution_options(synchronize_session="fetch")
+            # Check if the record already exists
+            self.cursor.execute("SELECT COUNT(1) FROM data_main_daily_send WHERE KEY = ?", (entry['KEY'],))
+            record_exists = self.cursor.fetchone()[0] > 0
 
-            result = self.session.execute(stmt)
-
-            if result.rowcount == 0:
-                # If no rows were updated, insert a new record
-                new_record = DataMainDailySend(**entry)
-                self.session.add(new_record)
-                inserted_count += 1
-            else:
+            if record_exists:
+                # Update existing record
+                self.cursor.execute("""
+                    UPDATE data_main_daily_send
+                    SET REG_DT = ?, WRITER = ?, DOWNLOAD_URL = ?, TELEGRAM_URL = ?
+                    WHERE KEY = ?
+                """, (entry.get('REG_DT', ''),
+                      entry.get('WRITER', ''),
+                      entry.get('DOWNLOAD_URL', None),
+                      entry.get('TELEGRAM_URL', None),
+                      entry['KEY']))
                 updated_count += 1
+            else:
+                # Insert new record
+                self.cursor.execute("""
+                    INSERT INTO data_main_daily_send (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                                                       ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
+                                                       DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, KEY)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (entry['SEC_FIRM_ORDER'],
+                      entry['ARTICLE_BOARD_ORDER'],
+                      entry['FIRM_NM'],
+                      entry.get('REG_DT', ''),
+                      entry.get('ATTACH_URL', ''),
+                      entry.get('ARTICLE_TITLE', ''),
+                      entry.get('ARTICLE_URL', ''),
+                      entry.get('MAIN_CH_SEND_YN', 'N'),
+                      entry.get('DOWNLOAD_URL', None),
+                      entry['WRITER'],
+                      entry['SAVE_TIME'],
+                      entry.get('TELEGRAM_URL', None),
+                      entry['KEY']))
+                inserted_count += 1
 
-        self.session.commit()
+        self.conn.commit()
         print(f"Data inserted: {inserted_count} rows, updated: {updated_count} rows.")
         return inserted_count, updated_count
 
     def fetch_daily_articles_by_date(self, firm_info=None, date_str=None):
         """Fetch articles by date."""
         query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
-
         three_days_ago = (datetime.strptime(query_date, '%Y%m%d') - timedelta(days=14)).strftime('%Y%m%d')
         two_days_after = (datetime.strptime(query_date, '%Y%m%d') + timedelta(days=14)).strftime('%Y%m%d')
 
-        query = self.session.query(DataMainDailySend).filter(
-            and_(
-                DataMainDailySend.REG_DT.between(three_days_ago, two_days_after),
-                DataMainDailySend.KEY.isnot(None)
-            )
-        )
+        query = """
+            SELECT * FROM data_main_daily_send
+            WHERE REG_DT BETWEEN ? AND ? AND KEY IS NOT NULL
+        """
+        params = [three_days_ago, two_days_after]
 
         if firm_info:
-            query = query.filter(DataMainDailySend.SEC_FIRM_ORDER == firm_info['SEC_FIRM_ORDER'])
+            query += " AND SEC_FIRM_ORDER = ?"
+            params.append(firm_info['SEC_FIRM_ORDER'])
 
-        results = query.order_by(
-            DataMainDailySend.REG_DT.desc(),
-            DataMainDailySend.SEC_FIRM_ORDER,
-            DataMainDailySend.ARTICLE_BOARD_ORDER,
-            DataMainDailySend.SAVE_TIME
-        ).all()
+        query += " ORDER BY REG_DT DESC, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME"
+        self.cursor.execute(query, params)
 
-        return [row.__dict__ for row in results]
+        results = self.cursor.fetchall()
+        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
 
     def update_telegram_url(self, record_id, telegram_url, article_title=None):
         """Update telegram URL and optionally article title."""
-        stmt = update(DataMainDailySend).where(DataMainDailySend.id == record_id).values(
-            TELEGRAM_URL=telegram_url
-        )
+        query = "UPDATE data_main_daily_send SET TELEGRAM_URL = ?"
+        params = [telegram_url]
 
         if article_title:
-            stmt = stmt.values(ARTICLE_TITLE=article_title)
+            query += ", ARTICLE_TITLE = ?"
+            params.append(article_title)
 
-        result = self.session.execute(stmt)
-        self.session.commit()
-        return result.rowcount
+        query += " WHERE id = ?"
+        params.append(record_id)
+
+        self.cursor.execute(query, params)
+        self.conn.commit()
+        return self.cursor.rowcount
 
     def daily_select_data(self, date_str=None, type=None):
         """Fetch data for specific date and type."""
@@ -121,42 +113,42 @@ class SQLiteManagerORM:
         three_days_ago = (datetime.now() - timedelta(days=3)).strftime('%Y%m%d')
         two_days_after = (datetime.now() + timedelta(days=2)).strftime('%Y%m%d')
 
-        query = self.session.query(DataMainDailySend).filter(
-            and_(
-                DataMainDailySend.REG_DT >= three_days_ago,
-                DataMainDailySend.REG_DT <= two_days_after,
-                func.date(DataMainDailySend.SAVE_TIME) == query_date
-            )
-        )
+        query = """
+            SELECT * FROM data_main_daily_send
+            WHERE REG_DT >= ? AND REG_DT <= ? AND DATE(SAVE_TIME) = ?
+        """
+        params = [three_days_ago, two_days_after, query_date]
 
         if type == 'send':
-            query = query.filter(
-                or_(DataMainDailySend.MAIN_CH_SEND_YN != 'Y', DataMainDailySend.MAIN_CH_SEND_YN.is_(None))
-            )
+            query += " AND (MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
         elif type == 'download':
-            query = query.filter(DataMainDailySend.MAIN_CH_SEND_YN == 'Y', DataMainDailySend.DOWNLOAD_URL.is_(None))
+            query += " AND MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_URL IS NULL"
 
-        return [row.__dict__ for row in query.all()]
+        self.cursor.execute(query, params)
+        results = self.cursor.fetchall()
+        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
 
     def daily_update_data(self, fetched_rows, type):
         """Update data based on the type."""
         if type == 'send':
             for row in fetched_rows:
-                stmt = update(DataMainDailySend).where(DataMainDailySend.id == row['id']).values(
-                    MAIN_CH_SEND_YN='Y'
-                )
-                self.session.execute(stmt)
+                self.cursor.execute("""
+                    UPDATE data_main_daily_send
+                    SET MAIN_CH_SEND_YN = 'Y'
+                    WHERE id = ?
+                """, (row['id'],))
         elif type == 'download':
-            stmt = update(DataMainDailySend).where(DataMainDailySend.id == fetched_rows['id']).values(
-                DOWNLOAD_URL='Y'
-            )
-            self.session.execute(stmt)
+            self.cursor.execute("""
+                UPDATE data_main_daily_send
+                SET DOWNLOAD_URL = 'Y'
+                WHERE id = ?
+            """, (fetched_rows['id'],))
 
-        self.session.commit()
+        self.conn.commit()
 
 # Example Usage
 if __name__ == "__main__":
-    db = SQLiteManagerORM()
+    db = SQLiteManagerSQL()
 
     # Example data
     data_list = [
@@ -177,14 +169,14 @@ if __name__ == "__main__":
         }
     ]
 
-    # # Insert or update data
+    # Insert or update data
     # db.insert_data(data_list)
 
     # Fetch data
-    # rows = db.fetch_daily_articles_by_date(firm_info={"SEC_FIRM_ORDER": 1})
     rows = db.fetch_daily_articles_by_date()
     print(rows)
 
-    # # Update data
+    # Update data
     # db.update_telegram_url(record_id=1, telegram_url="http://telegram.link")
-    db.close_session()
+
+    db.close_connection()
