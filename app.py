@@ -53,7 +53,7 @@ def home():
     """메인 페이지 - 레포트 목록 표시"""
     print(f"PDF_FOLDER: {PDF_FOLDER}")
     grouped_reports = group_reports_by_date_and_firm()
-    print(f"그룹화된 레포트: {grouped_reports}")
+    print(f"그룹화된 레포트: {len(grouped_reports)}")
     return render_template('index.html', grouped_reports=grouped_reports)
 
 @app.route('/pdf/<path:filename>')
