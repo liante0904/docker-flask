@@ -1,9 +1,20 @@
-from flask import Flask, request, send_from_directory, render_template, redirect
+from flask import Flask, send_from_directory, render_template
+from flask_talisman import Talisman
 from collections import defaultdict
 import os
-from model.SQLiteManagerORM import SQLiteManagerORM
+from model.SQLiteManagerORM import SQLiteManagerSQL
 
 app = Flask(__name__)
+
+# CSP 설정 (인라인 스타일과 스크립트 허용)
+csp = {
+    'default-src': '\'self\'',
+    'style-src': ['\'self\'', '\'unsafe-inline\''],
+    'script-src': ['\'self\'', '\'unsafe-inline\''],
+}
+
+Talisman(app, content_security_policy=csp, force_https=True)
+
 
 # PDF_FOLDER 경로를 현재 디렉토리 기준 상대 경로로 설정
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,20 +23,14 @@ PDF_FOLDER = os.path.join(BASE_DIR, 'pdf')
 if not os.path.exists(PDF_FOLDER):
     os.makedirs(PDF_FOLDER)
 
-
-@app.before_request
-def before_request():
-    """HTTP 요청이 오면 HTTPS로 리다이렉트"""
-    if request.headers.get('X-Forwarded-Proto') == 'http':
-        return redirect(request.url.replace("http://", "https://"), code=301)
-
+# DB에서 가져온 데이터를 날짜별, 회사별로 그룹화
 def group_reports_by_date_and_firm():
-    db = SQLiteManagerORM()
+    db = SQLiteManagerSQL()
     
     # DB에서 데이터 가져오기
     rows = db.fetch_daily_articles_by_date()
     print(f"DB에서 가져온 데이터: {rows}")
-    db.close_session()
+    db.close_connection()
     
     grouped = defaultdict(lambda: defaultdict(list))
     
@@ -48,7 +53,7 @@ def home():
     """메인 페이지 - 레포트 목록 표시"""
     print(f"PDF_FOLDER: {PDF_FOLDER}")
     grouped_reports = group_reports_by_date_and_firm()
-    print(f"그룹화된 레포트: {grouped_reports}")
+    print(f"그룹화된 레포트: {len(grouped_reports)}")
     return render_template('index.html', grouped_reports=grouped_reports)
 
 @app.route('/pdf/<path:filename>')
