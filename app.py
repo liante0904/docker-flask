@@ -92,12 +92,12 @@ def group_reports_by_date_and_firm():
 def home():
     """메인 페이지 - 레포트 목록 표시"""
 
-    # grouped_reports = group_reports_by_date_and_firm()
+    grouped_reports = group_reports_by_date_and_firm()
     
     # JSON 파일을 읽어 데이터 가져오기
-    json_file_path = os.path.join(BASE_DIR, 'data.json')
-    with open(json_file_path, 'r', encoding='utf-8') as json_file:
-        grouped_reports = json.load(json_file)
+    # json_file_path = os.path.join(BASE_DIR, 'data.json')
+    # with open(json_file_path, 'r', encoding='utf-8') as json_file:
+    #     grouped_reports = json.load(json_file)
         
     # print(f"그룹화된 레포트: {len(grouped_reports)}")
     return render_template('index.html', grouped_reports=grouped_reports)

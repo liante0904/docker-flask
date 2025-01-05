@@ -68,8 +68,8 @@ class SQLiteManagerSQL:
     def fetch_daily_articles_by_date(self, firm_info=None, date_str=None):
         """Fetch articles by date."""
         query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
-        three_days_ago = (datetime.strptime(query_date, '%Y%m%d') - timedelta(days=14)).strftime('%Y%m%d')
-        two_days_after = (datetime.strptime(query_date, '%Y%m%d') + timedelta(days=14)).strftime('%Y%m%d')
+        three_days_ago = (datetime.strptime(query_date, '%Y%m%d') - timedelta(days=7)).strftime('%Y%m%d')
+        two_days_after = (datetime.strptime(query_date, '%Y%m%d') + timedelta(days=7)).strftime('%Y%m%d')
 
         query = """
             SELECT * FROM data_main_daily_send
