@@ -1,6 +1,9 @@
 services:
-  flask-pdf-server:
-    build: .
+  flask:
+    container_name: flask
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     restart: unless-stopped
@@ -10,7 +13,24 @@ services:
     environment:
       - PDF_FOLDER=/app/pdf
       - DB_FOLDER=/app/sqlite3  # 환경 변수도 sqlite3 폴더로 변경
+    networks:
+      - flask  # flask 네트워크에 연결
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # Let's Encrypt 인증서 경로
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    depends_on:
+      - flask
+    networks:
+      - flask  # flask 네트워크에 연결
 
 networks:
-  flask-network:
-    driver: bridge
+  flask:
+    driver: bridge  # 동일한 네트워크에 두 서비스를 연결

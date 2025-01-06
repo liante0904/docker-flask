@@ -123,7 +123,8 @@ if __name__ == "__main__":
     # 환경 변수에 따라 app.run() 설정
     if os.getenv('FLASK_ENV') == 'development':
         app.run(debug=False)
-    else:
-        # 배포 환경에서는 SSL을 설정하거나 다른 옵션을 사용할 수 있습니다.
-        context = ('/app/cert.pem', '/app/privkey.pem')  # 인증서와 키 경로
-        app.run(host="0.0.0.0", port=5000, debug=False, ssl_context=context)
+    else: 
+        app.run(host="0.0.0.0", port=5000)
+        # # 배포 환경에서는 SSL을 설정하거나 다른 옵션을 사용할 수 있습니다.
+        # context = ('/app/cert.pem', '/app/privkey.pem')  # 인증서와 키 경로
+        # app.run(host="0.0.0.0", port=5000, debug=False, ssl_context=context)
