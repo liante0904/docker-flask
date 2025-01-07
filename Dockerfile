@@ -11,10 +11,6 @@ COPY requirements.txt /app/
 # 종속성 설치
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 인증서 복사
-COPY cert.pem /app/
-COPY privkey.pem /app/
-
 COPY . .
 
 # 환경 변수 설정 (PDF 디렉토리)

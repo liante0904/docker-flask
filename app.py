@@ -1,11 +1,11 @@
-from flask import Flask, send_from_directory, render_template
+from flask import Flask, send_from_directory, render_template, jsonify, request 
 from flask_talisman import Talisman
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 from collections import defaultdict
 import os
 import json
-from model.SQLiteManagerORM import SQLiteManagerSQL
+from model.SQLiteManager import SQLiteManagerSQL
 
 app = Flask(__name__)
 
@@ -88,9 +88,50 @@ def group_reports_by_date_and_firm():
     
     return grouped
 
+# DB에서 가져온 데이터를 날짜별, 회사별로 그룹화
+def recent_reports_by_today():
+    db = SQLiteManagerSQL()
+    
+    # DB에서 데이터 가져오기
+    rows = db.fetch_articles_by_todate()
+    print(f"DB에서 가져온 데이터: {len(rows)}")
+    db.close_connection()
+    
+    grouped = defaultdict(lambda: defaultdict(list))
+    
+    # DB에서 가져온 데이터를 그룹화
+    for row in rows:
+        cleaned_row = {
+            "title": row.get("ARTICLE_TITLE", "").strip(),
+            "link": (row.get("TELEGRAM_URL") or "").strip(),
+            "writer": (row.get("WRITER") or "").strip(),
+            "key": row.get("KEY", "").strip()
+        }
+        date = row.get("SAVE_TIME", "REG_DT").strip()
+        date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d')
+        firm = row.get("FIRM_NM", "").strip()
+        grouped[date][firm].append(cleaned_row)
+    
+    return grouped
+
 @app.route('/')
 def home():
-    """메인 페이지 - 레포트 목록 표시"""
+    """메인 페이지 - 레포트 목록 표시 (일별 그룹화된 레포트)"""
+
+    grouped_reports = recent_reports_by_today()
+    
+    # JSON 파일을 읽어 데이터 가져오기
+    # json_file_path = os.path.join(BASE_DIR, 'data.json')
+    # with open(json_file_path, 'r', encoding='utf-8') as json_file:
+    #     grouped_reports = json.load(json_file)
+        
+    # print(f"그룹화된 레포트: {len(grouped_reports)}")
+    return render_template('index.html', grouped_reports=grouped_reports, subtitle="최근 레포트")
+
+
+@app.route('/report/daily_group')
+def daily_group():
+    """메인 페이지 - 레포트 목록 표시 (일별 그룹화된 레포트)"""
 
     grouped_reports = group_reports_by_date_and_firm()
     
@@ -100,7 +141,32 @@ def home():
     #     grouped_reports = json.load(json_file)
         
     # print(f"그룹화된 레포트: {len(grouped_reports)}")
-    return render_template('index.html', grouped_reports=grouped_reports)
+    return render_template('index.html', grouped_reports=grouped_reports, subtitle="일자별 레포트")
+
+@app.route('/report', defaults={'key': None})
+@app.route('/report/<key>')
+def report(key):
+    """키가 없거나 recent일 경우 최근 레포트 표시"""
+    print(f"받은 키: {key}")
+
+    # JSON 파일 경로
+    json_file_path = os.path.join(BASE_DIR, 'data.json')
+    
+    # JSON 파일 읽기
+    with open(json_file_path, 'r', encoding='utf-8') as json_file:
+        all_reports = json.load(json_file)
+
+    # 최근 레포트 (최신 날짜순으로 정렬)
+    if key is None or key.lower() == 'recent':
+        recent_reports = sorted(all_reports, key=lambda x: x.get('date', ''), reverse=True)
+        return render_template('index.html', grouped_reports=recent_reports)
+
+    # 특정 키로 필터링
+    filtered_reports = [report for report in all_reports if report.get('key') == key]
+    if not filtered_reports:
+        return jsonify({'error': f'Key "{key}"에 해당하는 레포트가 없습니다.'}), 404
+
+    return render_template('index.html', grouped_reports=filtered_reports)
 
 @app.route('/pdf/<path:filename>')
 def serve_pdf(filename):
@@ -119,12 +185,8 @@ if not os.path.exists(json_file_path):
     generate_json_file()
     
 if __name__ == "__main__":
-    
     # 환경 변수에 따라 app.run() 설정
     if os.getenv('FLASK_ENV') == 'development':
-        app.run(debug=False)
-    else: 
+        app.run(debug=True)  # SSL 없이 실행
+    else:
         app.run(host="0.0.0.0", port=5000)
-        # # 배포 환경에서는 SSL을 설정하거나 다른 옵션을 사용할 수 있습니다.
-        # context = ('/app/cert.pem', '/app/privkey.pem')  # 인증서와 키 경로
-        # app.run(host="0.0.0.0", port=5000, debug=False, ssl_context=context)

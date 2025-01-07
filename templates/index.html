@@ -2,22 +2,98 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>증권사 레포트 리스트</title>
     <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            width: 100%;
+        }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0; padding: 0; box-sizing: border-box; font-size: 1em; background-color: #f0f0f5; 
+            font-size: 1em; 
+            background-color: #f0f0f5; 
         }
         header { 
-            background: #007aff; color: white; margin-bottom: 15px; padding: 20px; text-align: center; 
-            font-size: 1.3em; border-radius: 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+            background: #007aff; color: white; padding: 20px; text-align: center; 
+            font-size: 1.3em; position: relative; 
+            border-radius: 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .home-logo {
+            position: absolute; top: 50%; left: 20px; transform: translateY(-50%);
+            cursor: pointer; width: 40px; height: 40px; border-radius: 50%; background-color: white; 
+            display: flex; align-items: center; justify-content: center; font-size: 1.2em; color: #007aff; 
+            font-weight: bold; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .title {
+            font-weight: bold; color: white; cursor: pointer; margin: 0;
+        }
+        .hamburger-menu {
+            position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
+            width: 40px; height: 40px; cursor: pointer; display: flex; flex-direction: column; 
+            justify-content: space-around; align-items: center; background-color: transparent; 
+        }
+        .hamburger-menu div {
+            width: 25px; height: 3px; background: white; border-radius: 1px; 
+        }
+        /* 기존 메뉴 스타일 */
+        .menu-panel {
+            position: absolute; /* 메뉴 위치 */
+            top: 60px; /* 헤더 아래로 위치 */
+            right: 40px; /* 기본적으로 PC에서 오른쪽에 고정 */
+            width: auto; /* 리스트 너비를 컨텐츠에 맞춤 */
+            height: auto; /* 높이를 컨텐츠에 맞춤 */
+            background: white; 
+            border: 1px solid #d1d1d6; /* 경계선 추가 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+            display: none; /* 기본적으로 숨김 */
+            flex-direction: column; 
+            padding: 10px; 
+            border-radius: 12px; 
+            z-index: 1000;
+        }
+    
+        /* 화면 크기가 768px 이상일 때 */
+        @media (min-width: 768px) {
+            .menu-panel {
+                right: 300px; /* 메뉴 패널 오른쪽 300px 위치 */
+            }
+            .hamburger-menu {
+                right: 310px; /* 햄버거 버튼도 오른쪽 300px 위치 */
+            }
+        }
+    
+        /* 화면 크기가 768px 미만일 때 */
+        @media (max-width: 767px) {
+            .menu-panel {
+                right: 10px; /* 모바일에서는 오른쪽 10px 위치 */
+            }
+        }
+    
+        .menu-panel.open {
+            display: flex; /* 열릴 때 표시 */
+        }
+        .menu-item {
+            color: #007aff; font-weight: bold; text-decoration: none; font-size: 1.1em; margin: 10px 0;
+            padding: 10px 15px; border-radius: 15px; background-color: #f0f0f5; text-align: center;
+            transition: background-color 0.3s;
+            width: 100%; box-sizing: border-box; 
+        }
+        .menu-item:hover {
+            background-color: #e0e0e5;
+        }
+        .menu-title {
+            font-size: 1.2em; font-weight: bold; color: #007aff; margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.2em; font-weight: bold; color: #666; text-align: center; margin-bottom: 15px; margin-top: 15px;
         }
         .container { padding: 15px; }
         .date-group { margin-bottom: 25px; }
         .date-title { 
             font-size: 1.5em; font-weight: bold; margin-bottom: 12px; color: #333;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
         .company-group { margin-bottom: 20px; }
         .company-title { font-size: 1.3em; font-weight: bold; margin-bottom: 10px; color: #007aff; cursor: pointer; }
@@ -36,15 +112,27 @@
         }
     </style>
     <script>
-        // JavaScript로 div 클릭 시 링크 열기
-        function openLink(url) {
-            window.open(url, "_blank");
+        function toggleMenu() {
+            const menuPanel = document.querySelector('.menu-panel');
+            menuPanel.classList.toggle('open');
         }
     </script>
-
 </head>
 <body>
-    <header>증권사 레포트 리스트</header>
+    <header>
+        <div class="title" onclick="location.href='/'">🏠증권사 레포트 리스트</div>
+        <div class="hamburger-menu" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <div class="menu-panel">
+            <div class="menu-title">메뉴</div>
+            <a class="menu-item" href="/">최근 게시된 레포트</a>
+            <a class="menu-item" href="/report/daily_group">일자별 레포트</a>
+        </div>
+    </header>
+    <div class="subtitle">현재 메뉴: {{subtitle}}</div>
     <div class="container">
         {% for date, firms in grouped_reports.items() %}
         <div class="date-group">

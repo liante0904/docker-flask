@@ -87,6 +87,28 @@ class SQLiteManagerSQL:
         results = self.cursor.fetchall()
         return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
 
+    def fetch_articles_by_todate(self, firm_info=None, date_str=None):
+        """Fetch articles by date."""
+        query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
+        three_days_ago = (datetime.strptime(query_date, '%Y%m%d') - timedelta(days=3)).strftime('%Y%m%d')
+        two_days_after = (datetime.strptime(query_date, '%Y%m%d') + timedelta(days=2)).strftime('%Y%m%d')
+
+        query = """
+            SELECT * FROM data_main_daily_send
+            WHERE REG_DT BETWEEN ? AND ? 
+        """
+        params = [three_days_ago, two_days_after]
+
+        if firm_info:
+            query += " AND SEC_FIRM_ORDER = ?"
+            params.append(firm_info['SEC_FIRM_ORDER'])
+
+        query += " ORDER BY SAVE_TIME DESC , REG_DT DESC"
+        self.cursor.execute(query, params)
+
+        results = self.cursor.fetchall()
+        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
+    
     def update_telegram_url(self, record_id, telegram_url, article_title=None):
         """Update telegram URL and optionally article title."""
         query = "UPDATE data_main_daily_send SET TELEGRAM_URL = ?"
