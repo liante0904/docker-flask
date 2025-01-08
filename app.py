@@ -1,5 +1,6 @@
 from flask import Flask, send_from_directory, render_template, jsonify, request 
 from flask_talisman import Talisman
+from flask_compress import Compress
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 from collections import defaultdict
@@ -8,6 +9,7 @@ import json
 from model.SQLiteManager import SQLiteManagerSQL
 
 app = Flask(__name__)
+Compress(app)
 
 # CSP 설정 (인라인 스타일과 스크립트 허용)
 csp = {
@@ -47,12 +49,6 @@ def generate_json_file():
 
 json_file_path = os.path.join(BASE_DIR, 'data.json')
 
-# 작업 스케줄링: 매 시간 10분, 40분에 실행
-scheduler.add_job(generate_json_file, 'cron', minute='10,40')
-
-
-# 플래그로 스케줄러 시작 여부 확인
-scheduler_started = False
 
 @app.before_request
 def start_scheduler_on_first_request():
@@ -94,8 +90,7 @@ def update_cache_recent_reports():
         cleaned_row = {
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
-            "writer": (row.get("WRITER") or "").strip(),
-            "key": row.get("KEY", "").strip()
+            "writer": (row.get("WRITER") or "").strip()
         }
         date = row.get("SAVE_TIME", "REG_DT").strip()
         date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d')
@@ -125,8 +120,7 @@ def update_cache_grouped_reports():
         cleaned_row = {
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
-            "writer": (row.get("WRITER") or "").strip(),
-            "key": row.get("KEY", "").strip()
+            "writer": (row.get("WRITER") or "").strip()
         }
         date = row.get("REG_DT", "").strip()
         firm = row.get("FIRM_NM", "").strip()
@@ -135,6 +129,13 @@ def update_cache_grouped_reports():
     cache_grouped_reports["data"] = grouped
     cache_grouped_reports["last_modified"] = last_modified_time
     db.close_connection()
+
+# 작업 스케줄링: 매 시간 10분, 40분에 실행
+scheduler.add_job(update_cache_recent_reports, 'cron', minute='10,40')
+
+
+# 플래그로 스케줄러 시작 여부 확인
+scheduler_started = False
 
 
 # DB에서 가져온 데이터를 날짜별, 회사별로 그룹화
@@ -153,8 +154,7 @@ def group_reports_by_date_and_firm():
         cleaned_row = {
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
-            "writer": (row.get("WRITER") or "").strip(),
-            "key": row.get("KEY", "").strip()
+            "writer": (row.get("WRITER") or "").strip()
         }
         date = row.get("REG_DT", "").strip()
         firm = row.get("FIRM_NM", "").strip()
@@ -178,8 +178,7 @@ def recent_reports_by_today():
         cleaned_row = {
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
-            "writer": (row.get("WRITER") or "").strip(),
-            "key": row.get("KEY", "").strip()
+            "writer": (row.get("WRITER") or "").strip()
         }
         date = row.get("SAVE_TIME", "REG_DT").strip()
         date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d')

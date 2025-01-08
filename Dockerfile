@@ -20,7 +20,7 @@ ENV PDF_FOLDER=/app/pdf
 EXPOSE 5000
 
 # 6. Run Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "5", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "app:app"]
 
 # Gunicorn 실행 시 SSL 설정 추가
 # CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "5", "--certfile=/app/cert.pem", "--keyfile=/app/privkey.pem", "app:app"]
