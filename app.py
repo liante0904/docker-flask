@@ -63,6 +63,80 @@ def start_scheduler_on_first_request():
         scheduler_started = True
         print("APScheduler가 시작되었습니다.")
 
+# 캐시 초기화
+cache_recent_reports = {
+    "data": None,  # 최근 레포트 데이터 캐시
+    "last_modified": None  # 최근 레포트 마지막 수정 시간
+}
+
+cache_grouped_reports = {
+    "data": None,  # 그룹화된 레포트 데이터 캐시
+    "last_modified": None  # 그룹화된 레포트 마지막 수정 시간
+}
+
+
+def update_cache_recent_reports():
+    """최근 레포트 캐시 갱신"""
+    db = SQLiteManagerSQL()
+    last_modified_time = db.fetch_last_modified_time()  # DB의 마지막 갱신 시간 가져오기
+
+    # 캐시의 마지막 갱신 시간과 비교
+    if cache_recent_reports["last_modified"] == last_modified_time:
+        print("[최근 레포트] 데이터 변경 없음. 캐시를 사용합니다.")
+        db.close_connection()
+        return
+
+    print("[최근 레포트] 데이터 변경 감지. 캐시를 갱신합니다.")
+    rows = db.fetch_articles_by_todate()
+    grouped = defaultdict(lambda: defaultdict(list))
+
+    for row in rows:
+        cleaned_row = {
+            "title": row.get("ARTICLE_TITLE", "").strip(),
+            "link": (row.get("TELEGRAM_URL") or "").strip(),
+            "writer": (row.get("WRITER") or "").strip(),
+            "key": row.get("KEY", "").strip()
+        }
+        date = row.get("SAVE_TIME", "REG_DT").strip()
+        date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d')
+        firm = row.get("FIRM_NM", "").strip()
+        grouped[date][firm].append(cleaned_row)
+
+    cache_recent_reports["data"] = grouped
+    cache_recent_reports["last_modified"] = last_modified_time
+    db.close_connection()
+
+
+def update_cache_grouped_reports():
+    """그룹화된 레포트 캐시 갱신"""
+    db = SQLiteManagerSQL()
+    last_modified_time = db.fetch_last_modified_time()
+
+    if cache_grouped_reports["last_modified"] == last_modified_time:
+        print("[그룹화된 레포트] 데이터 변경 없음. 캐시를 사용합니다.")
+        db.close_connection()
+        return
+
+    print("[그룹화된 레포트] 데이터 변경 감지. 캐시를 갱신합니다.")
+    rows = db.fetch_daily_articles_by_date()
+    grouped = defaultdict(lambda: defaultdict(list))
+
+    for row in rows:
+        cleaned_row = {
+            "title": row.get("ARTICLE_TITLE", "").strip(),
+            "link": (row.get("TELEGRAM_URL") or "").strip(),
+            "writer": (row.get("WRITER") or "").strip(),
+            "key": row.get("KEY", "").strip()
+        }
+        date = row.get("REG_DT", "").strip()
+        firm = row.get("FIRM_NM", "").strip()
+        grouped[date][firm].append(cleaned_row)
+
+    cache_grouped_reports["data"] = grouped
+    cache_grouped_reports["last_modified"] = last_modified_time
+    db.close_connection()
+
+
 # DB에서 가져온 데이터를 날짜별, 회사별로 그룹화
 def group_reports_by_date_and_firm():
     db = SQLiteManagerSQL()
@@ -114,59 +188,29 @@ def recent_reports_by_today():
     
     return grouped
 
-@app.route('/')
-def home():
-    """메인 페이지 - 레포트 목록 표시 (일별 그룹화된 레포트)"""
 
-    grouped_reports = recent_reports_by_today()
-    
+
     # JSON 파일을 읽어 데이터 가져오기
     # json_file_path = os.path.join(BASE_DIR, 'data.json')
     # with open(json_file_path, 'r', encoding='utf-8') as json_file:
     #     grouped_reports = json.load(json_file)
-        
-    # print(f"그룹화된 레포트: {len(grouped_reports)}")
+    
+    
+@app.route('/')
+def home():
+    """메인 페이지 - 최근 레포트 표시"""
+    update_cache_recent_reports()
+    grouped_reports = cache_recent_reports["data"]
     return render_template('index.html', grouped_reports=grouped_reports, subtitle="최근 레포트")
 
 
 @app.route('/report/daily_group')
 def daily_group():
-    """메인 페이지 - 레포트 목록 표시 (일별 그룹화된 레포트)"""
-
-    grouped_reports = group_reports_by_date_and_firm()
-    
-    # JSON 파일을 읽어 데이터 가져오기
-    # json_file_path = os.path.join(BASE_DIR, 'data.json')
-    # with open(json_file_path, 'r', encoding='utf-8') as json_file:
-    #     grouped_reports = json.load(json_file)
-        
-    # print(f"그룹화된 레포트: {len(grouped_reports)}")
+    """메인 페이지 - 그룹화된 레포트 표시"""
+    update_cache_grouped_reports()
+    grouped_reports = cache_grouped_reports["data"]
     return render_template('index.html', grouped_reports=grouped_reports, subtitle="일자별 레포트")
 
-@app.route('/report', defaults={'key': None})
-@app.route('/report/<key>')
-def report(key):
-    """키가 없거나 recent일 경우 최근 레포트 표시"""
-    print(f"받은 키: {key}")
-
-    # JSON 파일 경로
-    json_file_path = os.path.join(BASE_DIR, 'data.json')
-    
-    # JSON 파일 읽기
-    with open(json_file_path, 'r', encoding='utf-8') as json_file:
-        all_reports = json.load(json_file)
-
-    # 최근 레포트 (최신 날짜순으로 정렬)
-    if key is None or key.lower() == 'recent':
-        recent_reports = sorted(all_reports, key=lambda x: x.get('date', ''), reverse=True)
-        return render_template('index.html', grouped_reports=recent_reports)
-
-    # 특정 키로 필터링
-    filtered_reports = [report for report in all_reports if report.get('key') == key]
-    if not filtered_reports:
-        return jsonify({'error': f'Key "{key}"에 해당하는 레포트가 없습니다.'}), 404
-
-    return render_template('index.html', grouped_reports=filtered_reports)
 
 @app.route('/pdf/<path:filename>')
 def serve_pdf(filename):
@@ -180,9 +224,8 @@ def serve_pdf(filename):
         print(f"에러 발생: {str(e)}")
         return f"파일을 찾을 수 없습니다: {filename}", 404
 
-
-if not os.path.exists(json_file_path):
-    generate_json_file()
+# if not os.path.exists(json_file_path):
+#     generate_json_file()
     
 if __name__ == "__main__":
     # 환경 변수에 따라 app.run() 설정

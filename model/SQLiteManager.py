@@ -17,6 +17,16 @@ class SQLiteManagerSQL:
     def close_connection(self):
         self.conn.close()
 
+    def fetch_last_modified_time(self):
+        """SAVE_TIME 컬럼에서 가장 최근 시간을 반환"""
+        query = "SELECT MAX(SAVE_TIME) FROM data_main_daily_send"
+        self.cursor.execute(query)
+        result = self.cursor.fetchone()
+        if result and result[0]:
+            # ISO 형식의 문자열을 Python datetime 객체로 변환
+            return datetime.fromisoformat(result[0])
+        return None
+
     def insert_data(self, data_list):
         """Insert or update data in the database."""
         inserted_count = 0
