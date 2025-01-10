@@ -210,19 +210,6 @@ def daily_group():
     grouped_reports = cache_grouped_reports["data"]
     return render_template('index.html', grouped_reports=grouped_reports, subtitle="일자별 레포트")
 
-
-@app.route('/pdf/<path:filename>')
-def serve_pdf(filename):
-    """PDF 파일 서빙"""
-    try:
-        print(f"요청된 파일: {filename}")
-        print(f"PDF 폴더 경로: {PDF_FOLDER}")
-        print(f"전체 파일 경로: {os.path.join(PDF_FOLDER, filename)}")
-        return send_from_directory(PDF_FOLDER, filename)
-    except Exception as e:
-        print(f"에러 발생: {str(e)}")
-        return f"파일을 찾을 수 없습니다: {filename}", 404
-
 # if not os.path.exists(json_file_path):
 #     generate_json_file()
     

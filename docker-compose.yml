@@ -8,7 +8,6 @@ services:
       - "5000:5000"
     restart: unless-stopped
     volumes:
-      - ${HOME}/pdf:/app/pdf  # 호스트의 pdf 폴더를 컨테이너에 연결
       - ${HOME}/sqlite3:/app/sqlite3  # 호스트의 sqlite3 폴더를 컨테이너에 연결
     environment:
       - PDF_FOLDER=/app/pdf
