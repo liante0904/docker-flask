@@ -34,7 +34,7 @@ class SQLiteManagerSQL:
         two_days_after = (datetime.strptime(query_date, '%Y%m%d') + timedelta(days=2)).strftime('%Y%m%d')
 
         query = """
-            SELECT ARTICLE_TITLE, FROM data_main_daily_send
+            SELECT * FROM data_main_daily_send
             WHERE REG_DT BETWEEN ? AND ?
         """
         params = [three_days_ago, two_days_after]

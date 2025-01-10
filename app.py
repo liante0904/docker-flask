@@ -32,20 +32,6 @@ if not os.path.exists(PDF_FOLDER):
 scheduler = BackgroundScheduler()
 
 
-# 주기적으로 JSON 파일을 생성하는 함수
-def generate_json_file():
-    db = SQLiteManagerSQL()
-    rows = db.fetch_daily_articles_by_date()
-    grouped = group_reports_by_date_and_firm()
-
-    json_file_path = os.path.join(BASE_DIR, 'data.json')
-    with open(json_file_path, 'w', encoding='utf-8') as json_file:
-        json.dump(grouped, json_file, ensure_ascii=False, indent=4)
-
-    db.close_connection()
-    print(f"JSON 파일이 생성되었습니다: {json_file_path}")
-
-
 
 json_file_path = os.path.join(BASE_DIR, 'data.json')
 
@@ -210,8 +196,6 @@ def daily_group():
     grouped_reports = cache_grouped_reports["data"]
     return render_template('index.html', grouped_reports=grouped_reports, subtitle="일자별 레포트")
 
-# if not os.path.exists(json_file_path):
-#     generate_json_file()
     
 if __name__ == "__main__":
     # 환경 변수에 따라 app.run() 설정
