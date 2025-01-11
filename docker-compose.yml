@@ -12,6 +12,7 @@ services:
     environment:
       - PDF_FOLDER=/app/pdf
       - DB_FOLDER=/app/sqlite3  # 환경 변수도 sqlite3 폴더로 변경
+      - TZ=Asia/Seoul  # 타임존 설정
     networks:
       - flask  # flask 네트워크에 연결
 
@@ -30,6 +31,8 @@ services:
     restart: unless-stopped
     depends_on:
       - flask
+    environment:
+      - TZ=Asia/Seoul  # 타임존 설정
     networks:
       - flask  # flask 네트워크에 연결
 
