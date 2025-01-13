@@ -13,8 +13,12 @@ services:
       - PDF_FOLDER=/app/pdf
       - DB_FOLDER=/app/sqlite3  # 환경 변수도 sqlite3 폴더로 변경
       - TZ=Asia/Seoul  # 타임존 설정
+      - REDIS_HOST=redis  # Redis 호스트 이름
+      - REDIS_PORT=6379  # Redis 포트
     networks:
       - flask  # flask 네트워크에 연결
+    depends_on:
+      - redis  # Redis 서비스가 먼저 시작되도록 설정
 
   nginx:
     image: nginx:latest
@@ -33,6 +37,15 @@ services:
       - flask
     environment:
       - TZ=Asia/Seoul  # 타임존 설정
+    networks:
+      - flask  # flask 네트워크에 연결
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"  # Redis 기본 포트
+    restart: unless-stopped
     networks:
       - flask  # flask 네트워크에 연결
 
