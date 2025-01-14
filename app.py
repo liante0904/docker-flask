@@ -140,6 +140,7 @@ def update_cache_grouped_reports():
 
 # 작업 스케줄링: 매 시간 10분, 40분에 실행
 scheduler.add_job(update_cache_recent_reports, 'cron', minute='10,40')
+scheduler.add_job(update_cache_grouped_reports, 'cron', minute='10,40')
 
 # 메모리 DB와 파일 DB 동기화
 def sync_memory_on_start():
