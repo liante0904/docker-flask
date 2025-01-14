@@ -71,37 +71,119 @@ class SQLiteManagerSQL:
         results = self.cursor.fetchall()
         return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
 
+
+class SQLiteManagerInMemory:
+    """메모리 기반 SQLite 관리 클래스"""
+    def __init__(self):
+        self.conn = sqlite3.connect(':memory:')
+        self.cursor = self.conn.cursor()
+
+    def initialize_schema(self, schema_sql):
+        self.cursor.executescript(schema_sql)
+        self.conn.commit()
+
+    def insert_records(self, records):
+        query = """
+            INSERT INTO data_main_daily_send (
+                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL,
+                ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL,
+                WRITER, SAVE_TIME, TELEGRAM_URL, KEY
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        self.cursor.executemany(query, records)
+        self.conn.commit()
+
+    def fetch_all(self):
+        self.cursor.execute("SELECT * FROM data_main_daily_send")
+        results = self.cursor.fetchall()
+        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
+
+    def close_connection(self):
+        self.conn.close()
+
+
+def sync_to_memory(disk_manager, memory_manager):
+    """디스크 DB 데이터를 메모리 DB로 동기화"""
+    schema_query = """
+        CREATE TABLE IF NOT EXISTS data_main_daily_send (
+            SEC_FIRM_ORDER INTEGER,
+            ARTICLE_BOARD_ORDER INTEGER,
+            FIRM_NM TEXT,
+            REG_DT TEXT,
+            ATTACH_URL TEXT,
+            ARTICLE_TITLE TEXT,
+            ARTICLE_URL TEXT,
+            MAIN_CH_SEND_YN TEXT,
+            DOWNLOAD_URL TEXT,
+            WRITER TEXT,
+            SAVE_TIME TEXT,
+            TELEGRAM_URL TEXT,
+            KEY TEXT PRIMARY KEY
+        )
+    """
+    memory_manager.initialize_schema(schema_query)
+
+    records = disk_manager.fetch_daily_articles_by_date()
+    if records:
+        formatted_records = [
+            (
+                record['SEC_FIRM_ORDER'], record['ARTICLE_BOARD_ORDER'], record['FIRM_NM'], record['REG_DT'],
+                record['ATTACH_URL'], record['ARTICLE_TITLE'], record['ARTICLE_URL'], record['MAIN_CH_SEND_YN'],
+                record['DOWNLOAD_URL'], record['WRITER'], record['SAVE_TIME'], record['TELEGRAM_URL'], record['KEY']
+            ) for record in records
+        ]
+        memory_manager.insert_records(formatted_records)
+
 # Example Usage
 if __name__ == "__main__":
-    db = SQLiteManagerSQL()
+    # 디스크 기반 SQLite 초기화
+    disk_manager = SQLiteManagerSQL()
 
-    # Example data
-    data_list = [
-        {
-            "SEC_FIRM_ORDER": 1,
-            "ARTICLE_BOARD_ORDER": 2,
-            "FIRM_NM": "Test Firm",
-            "REG_DT": "20250101",
-            "ATTACH_URL": "http://example.com",
-            "ARTICLE_TITLE": "Test Title",
-            "ARTICLE_URL": "http://example.com/article",
-            "MAIN_CH_SEND_YN": "N",
-            "DOWNLOAD_URL": None,
-            "WRITER": "Author",
-            "SAVE_TIME": datetime.now(),
-            "TELEGRAM_URL": None,
-            "KEY": "unique_key"
-        }
-    ]
+    # 메모리 기반 SQLite 초기화
+    memory_manager = SQLiteManagerInMemory()
 
-    # Insert or update data
-    # db.insert_data(data_list)
+    # 디스크에서 메모리로 동기화
+    def sync_to_memory(disk_manager, memory_manager):
+        """디스크 DB 데이터를 메모리 DB로 동기화"""
+        schema_query = """
+            CREATE TABLE IF NOT EXISTS data_main_daily_send (
+                SEC_FIRM_ORDER INTEGER,
+                ARTICLE_BOARD_ORDER INTEGER,
+                FIRM_NM TEXT,
+                REG_DT TEXT,
+                ATTACH_URL TEXT,
+                ARTICLE_TITLE TEXT,
+                ARTICLE_URL TEXT,
+                MAIN_CH_SEND_YN TEXT,
+                DOWNLOAD_URL TEXT,
+                WRITER TEXT,
+                SAVE_TIME TEXT,
+                TELEGRAM_URL TEXT,
+                KEY TEXT PRIMARY KEY
+            )
+        """
+        memory_manager.initialize_schema(schema_query)
 
-    # Fetch data
-    rows = db.fetch_daily_articles_by_date()
-    print(rows)
+        # fetch 데이터를 활용해 메모리 DB 갱신
+        records = disk_manager.fetch_daily_articles_by_date()
+        if records:
+            formatted_records = [
+                (
+                    record['SEC_FIRM_ORDER'], record['ARTICLE_BOARD_ORDER'], record['FIRM_NM'], record['REG_DT'],
+                    record['ATTACH_URL'], record['ARTICLE_TITLE'], record['ARTICLE_URL'], record['MAIN_CH_SEND_YN'],
+                    record['DOWNLOAD_URL'], record['WRITER'], record['SAVE_TIME'], record['TELEGRAM_URL'], record['KEY']
+                ) for record in records
+            ]
+            memory_manager.insert_records(formatted_records)
 
-    # Update data
-    # db.update_telegram_url(record_id=1, telegram_url="http://telegram.link")
+    # 데이터 동기화 실행
+    sync_to_memory(disk_manager, memory_manager)
 
-    db.close_connection()
+    # 메모리 DB 데이터 확인
+    print("메모리 DB 데이터:")
+    for row in memory_manager.fetch_all():
+        print(row)
+
+    # 연결 종료
+    disk_manager.close_connection()
+    memory_manager.close_connection()
