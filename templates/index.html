@@ -21,25 +21,12 @@
             <a class="menu-item" href="/report/daily_group">일자별 레포트</a>
         </div>
     </header>
-    <div class="subtitle">현재 메뉴: {{subtitle}}</div>
-    <div class="container">
-        {% for date, firms in grouped_reports.items() %}
-        <div class="date-group">
-            <div class="date-title">{{ date }}</div>
-            {% for firm, reports in firms.items() %}
-            <div class="company-group">
-                <div class="company-title">{{ firm }}</div>
-                {% for report in reports %}
-                <div class="report" onclick="openLink('{{ report.link }}')">
-                    <a href="{{ report.link }}" target="_blank">{{ report.title }}</a>
-                    <p>작성자: {{ report.writer }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            {% endfor %}
-        </div>
-        {% endfor %}
+    <div class="subtitle" id="subtitle">현재 메뉴</div>
+    <div class="loading" id="loading">로딩 중...</div> <!-- 로딩 표시 -->
+    <div class="container" id="report-container">
+        <!-- 비동기로 데이터가 렌더링될 영역 -->
     </div>
+    
     <script src="/static/js/scripts.js"></script>
 </body>
 </html>

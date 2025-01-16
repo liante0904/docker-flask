@@ -103,3 +103,19 @@ header {
 @media (min-width: 768px) { 
     .container { max-width: 800px; margin: auto; }
 }
+.loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #555;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    display: none; /* 처음에는 숨겨짐 */
+    z-index: 1000;
+}
