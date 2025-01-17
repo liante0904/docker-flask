@@ -42,46 +42,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderReports(data) {
         reportContainer.innerHTML = ''; 
-
-        Object.entries(data).forEach(([date, firms]) => {
+    
+        // JSON 데이터의 날짜 형식 구분
+        const isIsoFormat = Object.keys(data)[0].includes('T'); // ISO 8601 포맷인지 확인
+    
+        // 날짜 정렬 (내림차순)
+        const sortedData = Object.entries(data).sort(([dateA], [dateB]) => {
+            const dateAParsed = isIsoFormat ? new Date(dateA) : new Date(dateA.slice(0, 4) + '-' + dateA.slice(4, 6) + '-' + dateA.slice(6, 8));
+            const dateBParsed = isIsoFormat ? new Date(dateB) : new Date(dateB.slice(0, 4) + '-' + dateB.slice(4, 6) + '-' + dateB.slice(6, 8));
+            return dateBParsed - dateAParsed; // 내림차순 정렬
+        });
+    
+        // 렌더링
+        sortedData.forEach(([date, firms]) => {
             const dateGroup = document.createElement('div');
             dateGroup.className = 'date-group';
-
+    
             const dateTitle = document.createElement('div');
             dateTitle.className = 'date-title';
             dateTitle.textContent = date;
             dateGroup.appendChild(dateTitle);
-
+    
             Object.entries(firms).forEach(([firm, reports]) => {
                 const companyGroup = document.createElement('div');
                 companyGroup.className = 'company-group';
-
+    
                 const companyTitle = document.createElement('div');
                 companyTitle.className = 'company-title';
                 companyTitle.textContent = firm;
                 companyGroup.appendChild(companyTitle);
-
+    
                 reports.forEach(report => {
                     const reportElement = document.createElement('div');
                     reportElement.className = 'report';
-
+    
                     const reportLink = document.createElement('a');
                     reportLink.href = report.link;
                     reportLink.target = '_blank';
                     reportLink.textContent = report.title;
-
+    
                     const reportWriter = document.createElement('p');
                     reportWriter.textContent = `작성자: ${report.writer}`;
-
+    
                     reportElement.appendChild(reportLink);
                     reportElement.appendChild(reportWriter);
                     companyGroup.appendChild(reportElement);
                 });
-
+    
                 dateGroup.appendChild(companyGroup);
             });
-
+    
             reportContainer.appendChild(dateGroup);
         });
-    }
+    }    
 });
