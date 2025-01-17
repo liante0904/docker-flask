@@ -6,6 +6,7 @@ from datetime import datetime
 from collections import defaultdict
 import os
 import json
+import time
 from model.SQLiteManager import SQLiteManagerSQL
 from dotenv import load_dotenv
 
@@ -138,19 +139,39 @@ def add_cache_control_headers(response):
     response.headers["Expires"] = "0"
     return response
 
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    # 파일 경로
+    file_path = os.path.join(app.root_path, 'static', filename)
+
+    if os.path.exists(file_path):
+        # 타임스탬프 생성
+        timestamp = int(os.path.getmtime(file_path))
+        # 응답에 타임스탬프를 추가
+        response = send_from_directory('static', filename)
+        response.headers['X-Timestamp'] = timestamp  # 디버깅용 헤더
+        return response
+    else:
+        return "File not found", 404
+
 @app.route('/')
 def home():
     if cache_recent_reports["data"] is None:
         update_cache_recent_reports()
     grouped_reports = cache_recent_reports["data"]
-    return render_template('index.html', grouped_reports=grouped_reports, subtitle="최근 레포트")
+    styles_url = f"/static/css/styles.css?t={int(time.time())}"
+    scripts_url = f"/static/js/scripts.js?t={int(time.time())}"
+    return render_template('index.html', grouped_reports=grouped_reports, subtitle="최근 레포트", styles_url=styles_url, scripts_url=scripts_url)
 
 @app.route('/report/daily_group')
 def daily_group():
     if cache_grouped_reports["data"] is None:
         update_cache_grouped_reports()
     grouped_reports = cache_grouped_reports["data"]
-    return render_template('index.html', grouped_reports=grouped_reports, subtitle="일자별 레포트")
+    # 정적 파일에 타임스탬프 추가
+    styles_url = f"/static/css/styles.css?t={int(time.time())}"
+    scripts_url = f"/static/js/scripts.js?t={int(time.time())}"
+    return render_template('index.html', grouped_reports=grouped_reports, subtitle="일자별 레포트", styles_url=styles_url, scripts_url=scripts_url)
 
 if __name__ == "__main__":
     if os.getenv('FLASK_ENV') == 'development':
