@@ -56,6 +56,9 @@ header {
     .hamburger-menu {
         right: 310px; /* 햄버거 버튼도 오른쪽 300px 위치 */
     }
+    .search-button {
+        right: 350px; /* 햄버거 버튼도 오른쪽 300px 위치 */
+    }
 }
 
 /* 화면 크기가 768px 미만일 때 */
@@ -122,4 +125,93 @@ header {
     border-radius: 8px;
     display: none; /* 처음에는 숨겨짐 */
     z-index: 1000;
+}
+/* 검색 버튼 스타일 */
+.search-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    color: #007aff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.search-button:hover {
+    background-color: #e0e0e5;
+}
+
+
+
+
+/* 검색 오버레이 */
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none; /* 기본적으로 숨김 */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* 검색 컨테이너 */
+.search-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 80%;
+    max-width: 600px;
+}
+
+/* 검색 입력 필드 */
+.search-input {
+    flex: 1;
+    padding: 10px;
+    font-size: 1em;
+    border: 1px solid #d1d1d6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 검색 버튼 */
+.search-submit {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.search-submit:hover {
+    background-color: #005bb5;
+}
+
+/* 닫기 버튼 */
+.search-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #333;
+    padding: 0;
 }

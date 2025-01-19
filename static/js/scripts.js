@@ -3,6 +3,37 @@ function toggleMenu() {
     menuPanel.classList.toggle('open');
 }
 
+// 검색창 토글
+function toggleSearch() {
+    const overlay = document.getElementById("searchOverlay");
+    const searchInput = document.getElementById("searchInput");
+
+    if (overlay.style.display === "flex") {
+        overlay.style.display = "none";
+    } else {
+        overlay.style.display = "flex";
+        searchInput.focus(); // 검색창 열릴 때 자동 포커스
+    }
+}
+
+// 검색 실행
+function submitSearch() {
+    const query = document.getElementById("searchInput").value;
+    if (!query.trim()) {
+        alert("검색어를 입력해주세요.");
+        return;
+    }
+    // 검색 요청을 서버로 전송
+    window.location.href = `/search_report?query=${encodeURIComponent(query)}`;
+}
+
+// 검색 입력 필드에서 Enter 키 처리
+document.getElementById("searchInput").addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        submitSearch();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const subtitleElement = document.getElementById('subtitle');
     const reportContainer = document.getElementById('report-container');

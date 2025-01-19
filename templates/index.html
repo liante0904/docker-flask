@@ -2,14 +2,15 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex, nofollow" />
     <title>증권사 레포트 리스트</title>
-    <link rel="stylesheet" href="{{ styles_url }}">
+    <link rel="stylesheet" href="{{ styles_url }}"> <!-- CSS 파일 분리 -->
 </head>
 <body>
     <header>
         <div class="title" onclick="location.href='/'">🏠증권사 레포트 리스트</div>
+        <div class="search-button" onclick="toggleSearch()">🔍</div> <!-- 검색 버튼 -->
         <div class="hamburger-menu" onclick="toggleMenu()">
             <div></div>
             <div></div>
@@ -26,7 +27,21 @@
     <div class="container" id="report-container">
         <!-- 비동기로 데이터가 렌더링될 영역 -->
     </div>
+
+    <!-- 검색 오버레이 -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-container">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="검색어를 입력하세요..."
+                class="search-input"
+            />
+            <button class="search-submit" onclick="submitSearch()">검색</button>
+            <button class="search-close" onclick="toggleSearch()">×</button>
+        </div>
+    </div>
     
-    <script src="{{ scripts_url }}"></script>
+    <script src="{{ scripts_url }}"></script> <!-- JS 파일 분리 -->
 </body>
 </html>
