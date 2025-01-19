@@ -31,42 +31,13 @@ header {
 .hamburger-menu div {
     width: 25px; height: 3px; background: white; border-radius: 1px; 
 }
-/* 기존 메뉴 스타일 */
 .menu-panel {
-    position: absolute; /* 메뉴 위치 */
-    top: 60px; /* 헤더 아래로 위치 */
-    right: 40px; /* 기본적으로 PC에서 오른쪽에 고정 */
-    width: auto; /* 리스트 너비를 컨텐츠에 맞춤 */
-    height: auto; /* 높이를 컨텐츠에 맞춤 */
-    background: white; 
-    border: 1px solid #d1d1d6; /* 경계선 추가 */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-    display: none; /* 기본적으로 숨김 */
-    flex-direction: column; 
-    padding: 10px; 
-    border-radius: 12px; 
-    z-index: 1000;
+    position: absolute; top: 60px; right: 40px; width: auto; height: auto; background: white; 
+    border: 1px solid #d1d1d6; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+    display: none; flex-direction: column; padding: 10px; border-radius: 12px; z-index: 1000;
 }
-
-/* 화면 크기가 768px 이상일 때 */
-@media (min-width: 768px) {
-    .menu-panel {
-        right: 300px; /* 메뉴 패널 오른쪽 300px 위치 */
-    }
-    .hamburger-menu {
-        right: 310px; /* 햄버거 버튼도 오른쪽 300px 위치 */
-    }
-}
-
-/* 화면 크기가 768px 미만일 때 */
-@media (max-width: 767px) {
-    .menu-panel {
-        right: 10px; /* 모바일에서는 오른쪽 10px 위치 */
-    }
-}
-
 .menu-panel.open {
-    display: flex; /* 열릴 때 표시 */
+    display: flex;
 }
 .menu-item {
     color: #007aff; font-weight: bold; text-decoration: none; font-size: 1.1em; margin: 10px 0;
@@ -84,22 +55,101 @@ header {
     font-size: 1.2em; font-weight: bold; color: #666; text-align: center; margin-bottom: 15px; margin-top: 15px;
 }
 .container { padding: 15px; }
-.date-group { margin-bottom: 25px; }
-.date-title { 
-    font-size: 1.5em; font-weight: bold; margin-bottom: 12px; color: #333;
+.loading {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; padding: 20px; font-size: 1.2em; font-weight: bold; color: #555;
+    background-color: rgba(255, 255, 255, 0.8); border: 1px solid #ddd; border-radius: 8px;
+    display: none; z-index: 1000;
 }
-.company-group { margin-bottom: 20px; }
-.company-title { font-size: 1.3em; font-weight: bold; margin-bottom: 10px; color: #007aff; cursor: pointer; }
-.report { 
-    border: 1px solid #d1d1d6; border-radius: 12px; padding: 12px 16px; margin: 8px 0; 
-    background: white; font-size: 1.15em; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+/* 검색 버튼 스타일 */
+.search-button {
+    position: absolute;
+    top: 50%;
+    right: 70px; /* 햄버거 메뉴 왼쪽에 위치 */
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    color: #007aff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
-.report a { 
-    text-decoration: none; color: #007aff; font-weight: bold; 
+
+.search-button:hover {
+    background-color: #e0e0e5;
 }
-.report a:hover { 
-    text-decoration: underline; 
+
+/* 햄버거 메뉴 위치 */
+.hamburger-menu {
+    right: 20px; /* 기존 위치 유지 */
 }
-@media (min-width: 768px) { 
-    .container { max-width: 800px; margin: auto; }
+
+/* 검색 오버레이 */
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none; /* 기본적으로 숨김 */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* 검색 컨테이너 */
+.search-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 80%;
+    max-width: 600px;
+}
+
+/* 검색 입력 필드 */
+.search-input {
+    flex: 1;
+    padding: 10px;
+    font-size: 1em;
+    border: 1px solid #d1d1d6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 검색 버튼 */
+.search-submit {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.search-submit:hover {
+    background-color: #005bb5;
+}
+
+/* 닫기 버튼 */
+.search-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #333;
+    padding: 0;
 }
