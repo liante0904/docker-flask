@@ -32,6 +32,7 @@ scheduler = BackgroundScheduler()
 # 캐시 초기화
 cache_recent_reports = {"data": None, "last_modified": None}
 cache_grouped_reports = {"data": None, "last_modified": None}
+cache_recent_global_reports = {"data": None, "last_modified": None}
 
 # JSON 파일 저장 디렉토리 생성
 static_folder = os.path.join(os.getcwd(), 'static', 'reports')
@@ -76,7 +77,7 @@ def update_cache_recent_reports():
     save_json_to_file('recent_reports.json', grouped)  # JSON 파일로 저장
     db.close_connection()
 
-def update_cache_grouped_reports():
+def update_cache_daily_group_reports():
     """그룹화된 레포트 캐시 갱신 및 JSON 파일 저장"""
     db = SQLiteManagerSQL()
     last_modified_time = db.fetch_last_modified_time()
@@ -102,12 +103,45 @@ def update_cache_grouped_reports():
 
     cache_grouped_reports["data"] = grouped
     cache_grouped_reports["last_modified"] = last_modified_time
-    save_json_to_file('grouped_reports.json', grouped)  # JSON 파일로 저장
+    # save_json_to_file('grouped_reports.json', grouped)  # JSON 파일로 저장
+    save_json_to_file('daily_group_reports.json', grouped)  # JSON 파일로 저장
+    db.close_connection()
+
+def update_cache_recent_global_reports():
+    """최근 글로벌 레포트 캐시 갱신 및 JSON 파일 저장"""
+    db = SQLiteManagerSQL()
+    last_modified_time = db.fetch_last_modified_time()
+
+    if cache_recent_global_reports["last_modified"] == last_modified_time:
+        print("[최근 글로벌 레포트] 데이터 변경 없음. 캐시를 사용합니다.")
+        db.close_connection()
+        return
+
+    print("[최근 글로벌 레포트] 데이터 변경 감지. 캐시를 갱신합니다.")
+    rows = db.fetch_global_articles_by_todate()
+    grouped = defaultdict(lambda: defaultdict(list))
+
+    for row in rows:
+        cleaned_row = {
+            "title": row.get("ARTICLE_TITLE", "").strip(),
+            "link": (row.get("TELEGRAM_URL") or "").strip(),
+            "writer": (row.get("WRITER") or "").strip()
+        }
+        date = row.get("SAVE_TIME", "REG_DT").strip()
+        date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d')
+        firm = row.get("FIRM_NM", "").strip()
+        grouped[date][firm].append(cleaned_row)
+
+    cache_recent_global_reports["data"] = grouped
+    cache_recent_global_reports["last_modified"] = last_modified_time
+
+    save_json_to_file('daily_global_reports.json', grouped)  # JSON 파일로 저장
     db.close_connection()
 
 # 작업 스케줄링
 scheduler.add_job(update_cache_recent_reports, 'cron', minute='10,40')
-scheduler.add_job(update_cache_grouped_reports, 'cron', minute='10,40')
+scheduler.add_job(update_cache_daily_group_reports, 'cron', minute='10,40')
+scheduler.add_job(update_cache_recent_global_reports, 'cron', minute='10,40')
 
 
 # 플래그로 스케줄러 시작 여부 확인
@@ -122,12 +156,14 @@ def start_scheduler_on_first_request():
         print("APScheduler가 시작되었습니다.")
 
     update_cache_recent_reports()
-    update_cache_grouped_reports()
+    update_cache_daily_group_reports()
+    update_cache_recent_global_reports()
     
 app.before_request(start_scheduler_on_first_request)
 
 update_cache_recent_reports()
-update_cache_grouped_reports()
+update_cache_daily_group_reports()
+update_cache_recent_global_reports()
 
 @app.after_request
 def add_cache_control_headers(response):
@@ -166,7 +202,7 @@ def home():
 @app.route('/report/daily_group')
 def daily_group():
     if cache_grouped_reports["data"] is None:
-        update_cache_grouped_reports()
+        update_cache_daily_group_reports()
     grouped_reports = cache_grouped_reports["data"]
     # 정적 파일에 타임스탬프 추가
     styles_url = f"/static/css/styles.css?t={int(time.time())}"
