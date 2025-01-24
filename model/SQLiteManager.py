@@ -71,6 +71,30 @@ class SQLiteManagerSQL:
         results = self.cursor.fetchall()
         return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
 
+    def search_reports_by_keyword(self, keyword, offset=0, limit=10):
+        """
+        키워드로 레포트를 검색하고 페이징 처리합니다.
+        :param keyword: 검색 키워드
+        :param offset: 페이징 offset
+        :param limit: 페이징 limit
+        :return: 검색 결과 리스트 (각 결과는 딕셔너리 형태)
+        """
+        query = """
+            SELECT ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
+            FROM data_main_daily_send
+            WHERE ARTICLE_TITLE LIKE ? OR WRITER LIKE ? OR FIRM_NM LIKE ?
+            ORDER BY SAVE_TIME DESC
+            LIMIT ? OFFSET ?
+        """
+        keyword_pattern = f"%{keyword}%"
+        params = (keyword_pattern, keyword_pattern, keyword_pattern, limit, offset)
+
+        self.cursor.execute(query, params)
+
+        # 결과를 딕셔너리 리스트 형태로 반환
+        results = self.cursor.fetchall()
+        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
+
     def fetch_global_articles_by_todate(self, firm_info=None, date_str=None):
         """Fetch articles by date."""
         query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')

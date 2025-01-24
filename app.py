@@ -209,6 +209,21 @@ def daily_group():
     scripts_url = f"/static/js/scripts.js?t={int(time.time())}"
     return render_template('index.html', grouped_reports=grouped_reports, subtitle="일자별 레포트", styles_url=styles_url, scripts_url=scripts_url)
 
+@app.route('/reports/search', methods=['GET'])
+def search_reports():
+    """키워드로 레포트 검색"""
+    keyword = request.args.get('keyword', '').strip()
+    offset = int(request.args.get('offset', 0))
+    limit = int(request.args.get('limit', 10))
+
+    db = SQLiteManagerSQL()
+    rows = db.search_reports_by_keyword(keyword)  # 키워드로 데이터베이스 검색
+    db.close_connection()
+
+    # 페이징 처리
+    paginated_results = rows[offset:offset + limit]
+    return jsonify(paginated_results)
+
 if __name__ == "__main__":
     if os.getenv('FLASK_ENV') == 'development':
         app.run(debug=True)
