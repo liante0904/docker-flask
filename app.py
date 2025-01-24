@@ -214,14 +214,28 @@ def search_reports():
     """키워드로 레포트 검색"""
     keyword = request.args.get('keyword', '').strip()
     offset = int(request.args.get('offset', 0))
-    limit = int(request.args.get('limit', 10))
+    limit = int(request.args.get('limit', 30))
 
     db = SQLiteManagerSQL()
-    rows = db.search_reports_by_keyword(keyword)  # 키워드로 데이터베이스 검색
+    rows = db.search_reports_by_keyword(keyword, offset, limit)  # 키워드로 데이터베이스 검색
+    rows = rows[offset:offset + limit]
+
+    paginated_results = defaultdict(lambda: defaultdict(list))
+
+    for row in rows:
+        cleaned_row = {
+            "title": row.get("ARTICLE_TITLE", "").strip(),
+            "link": (row.get("TELEGRAM_URL") or "").strip(),
+            "writer": (row.get("WRITER") or "").strip()
+        }
+        date = row.get("SAVE_TIME", "REG_DT").strip()
+        date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d')
+        firm = row.get("FIRM_NM", "").strip()
+        paginated_results[date][firm].append(cleaned_row)
+
     db.close_connection()
 
     # 페이징 처리
-    paginated_results = rows[offset:offset + limit]
     return jsonify(paginated_results)
 
 if __name__ == "__main__":

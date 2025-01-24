@@ -71,7 +71,7 @@ class SQLiteManagerSQL:
         results = self.cursor.fetchall()
         return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
 
-    def search_reports_by_keyword(self, keyword, offset=0, limit=10):
+    def search_reports_by_keyword(self, keyword, offset=0, limit=30):
         """
         키워드로 레포트를 검색하고 페이징 처리합니다.
         :param keyword: 검색 키워드
@@ -82,12 +82,12 @@ class SQLiteManagerSQL:
         query = """
             SELECT ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
             FROM data_main_daily_send
-            WHERE ARTICLE_TITLE LIKE ? OR WRITER LIKE ? OR FIRM_NM LIKE ?
+            WHERE ARTICLE_TITLE LIKE ? OR WRITER LIKE ? 
             ORDER BY SAVE_TIME DESC
             LIMIT ? OFFSET ?
         """
         keyword_pattern = f"%{keyword}%"
-        params = (keyword_pattern, keyword_pattern, keyword_pattern, limit, offset)
+        params = (keyword_pattern, keyword_pattern, limit, offset)
 
         self.cursor.execute(query, params)
 
