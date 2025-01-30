@@ -63,6 +63,7 @@ def update_cache_recent_reports():
 
     for row in rows:
         cleaned_row = {
+            "id": row.get("id", ""),
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
             "writer": (row.get("WRITER") or "").strip()
@@ -93,6 +94,7 @@ def update_cache_daily_group_reports():
 
     for row in rows:
         cleaned_row = {
+            "id": row.get("id", ""),
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
             "writer": (row.get("WRITER") or "").strip()
@@ -123,6 +125,7 @@ def update_cache_recent_global_reports():
 
     for row in rows:
         cleaned_row = {
+            "id": row.get("id", ""),
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
             "writer": (row.get("WRITER") or "").strip()
@@ -224,6 +227,7 @@ def search_reports():
 
     for row in rows:
         cleaned_row = {
+            "id": row.get("id", ""),
             "title": row.get("ARTICLE_TITLE", "").strip(),
             "link": (row.get("TELEGRAM_URL") or "").strip(),
             "writer": (row.get("WRITER") or "").strip()

@@ -80,7 +80,7 @@ class SQLiteManagerSQL:
         :return: 검색 결과 리스트 (각 결과는 딕셔너리 형태)
         """
         query = """
-            SELECT ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
+            SELECT id, ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
             FROM data_main_daily_send
             WHERE ARTICLE_TITLE LIKE ? OR WRITER LIKE ? 
             ORDER BY SAVE_TIME DESC
