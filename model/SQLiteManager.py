@@ -83,7 +83,7 @@ class SQLiteManagerSQL:
             SELECT id, ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
             FROM data_main_daily_send
             WHERE ARTICLE_TITLE LIKE ? OR WRITER LIKE ? 
-            ORDER BY SAVE_TIME DESC
+            ORDER BY id DESC
             LIMIT ? OFFSET ?
         """
         keyword_pattern = f"%{keyword}%"
