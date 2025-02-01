@@ -43,7 +43,7 @@ class SQLiteManagerSQL:
             query += " AND SEC_FIRM_ORDER = ?"
             params.append(firm_info['SEC_FIRM_ORDER'])
 
-        query += " ORDER BY REG_DT DESC, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME"
+        query += " ORDER BY id DESC, REG_DT DESC, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER"
         self.cursor.execute(query, params)
 
         results = self.cursor.fetchall()
@@ -65,7 +65,7 @@ class SQLiteManagerSQL:
             query += " AND SEC_FIRM_ORDER = ?"
             params.append(firm_info['SEC_FIRM_ORDER'])
 
-        query += " ORDER BY SAVE_TIME DESC , REG_DT DESC"
+        query += " ORDER BY id DESC , REG_DT DESC"
         self.cursor.execute(query, params)
 
         results = self.cursor.fetchall()
@@ -103,26 +103,13 @@ class SQLiteManagerSQL:
 
         query = """
             SELECT * FROM data_main_daily_send
-                WHERE   MAIN_CH_SEND_YN = 'Y'
-                        AND (SEC_FIRM_ORDER = 1 and ARTICLE_BOARD_ORDER = 3 
-                        or SEC_FIRM_ORDER = 5 and ARTICLE_BOARD_ORDER = 2 
-                        or SEC_FIRM_ORDER = 9 and ARTICLE_BOARD_ORDER = 2 
-                        or SEC_FIRM_ORDER = 10 and ARTICLE_BOARD_ORDER = 3 
-                        or SEC_FIRM_ORDER = 12 and ARTICLE_BOARD_ORDER = 3 
-                        or SEC_FIRM_ORDER = 18 and ARTICLE_BOARD_ORDER = 2
-                        or SEC_FIRM_ORDER = 25 and ARTICLE_BOARD_ORDER = 4
-                        or ARTICLE_TITLE LIKE "%.US%"
-                        )
-                        
-                        AND REG_DT BETWEEN ? AND ? 
+            WHERE MAIN_CH_SEND_YN = 'Y' 
+            AND MKT_TP <> 'KR' 
+            AND REG_DT BETWEEN ? AND ?
         """
         params = [three_days_ago, two_days_after]
 
-        if firm_info:
-            query += " AND SEC_FIRM_ORDER = ?"
-            params.append(firm_info['SEC_FIRM_ORDER'])
-
-        query += " ORDER BY SAVE_TIME DESC , REG_DT DESC"
+        query += " ORDER BY id DESC , REG_DT DESC"
         self.cursor.execute(query, params)
 
         results = self.cursor.fetchall()
