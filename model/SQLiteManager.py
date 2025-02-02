@@ -115,6 +115,32 @@ class SQLiteManagerSQL:
         results = self.cursor.fetchall()
         return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
 
+    def fetch_global_articles_by_id(self, last_id=0, limit=10):
+        """Fetch articles by date."""
+
+        query = """
+            SELECT * FROM data_main_daily_send
+            WHERE MAIN_CH_SEND_YN = 'Y' 
+            AND MKT_TP <> 'KR' 
+        """
+        params = []
+        # 초기 조회가 아니라면 last_id 기준으로 더 작은 값 조회
+        if last_id:
+            query += " AND id < ?"
+            params.append(last_id)
+
+        query += " ORDER BY id DESC LIMIT ?"
+        params.append(limit)
+
+        self.cursor.execute(query, params)
+        results = self.cursor.fetchall()
+
+        # Fetch 결과가 없으면 빈 리스트 반환
+        if not results:
+            return []
+
+        return [dict(zip([column[0] for column in self.cursor.description], row)) for row in results]
+
 # Example Usage
 if __name__ == "__main__":
     db = SQLiteManagerSQL()

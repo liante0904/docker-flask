@@ -242,6 +242,39 @@ def search_reports():
     # 페이징 처리
     return jsonify(paginated_results)
 
+@app.route('/reports/global/<int:id>', methods=['GET'])
+def fetch_reports_global(id):
+    """글로벌 레포트 조회"""
+    if id is None:
+        id = 0
+    
+    db = SQLiteManagerSQL()
+    rows = db.fetch_global_articles_by_id(id)  # 글로벌 레포트 조회
+    
+    paginated_results = defaultdict(lambda: defaultdict(list))
+    for row in rows:
+        cleaned_row = {
+            "id": row.get("id", ""),
+            "title": row.get("ARTICLE_TITLE", "").strip(),
+            "link": (row.get("TELEGRAM_URL") or "").strip(),
+            "writer": (row.get("WRITER") or "").strip()
+        }
+        date = row.get("SAVE_TIME", "REG_DT").strip()
+        date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f').strftime('%Y-%m-%d')
+        firm = row.get("FIRM_NM", "").strip()
+        paginated_results[date][firm].append(cleaned_row)
+
+    # 일자별 내림차순 정렬
+    sorted_paginated_results = {
+        date: paginated_results[date] 
+        for date in sorted(paginated_results.keys(), reverse=True)
+    }
+    db.close_connection()
+
+    # 페이징 처리
+    return jsonify(sorted_paginated_results)
+
+
 if __name__ == "__main__":
     if os.getenv('FLASK_ENV') == 'development':
         app.run(debug=True)

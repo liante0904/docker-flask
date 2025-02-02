@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isDailyGroup = window.location.pathname.includes('daily_group');
     const jsonBaseUrl = isDailyGroup 
-        ? '/static/reports/grouped_reports.json' 
+        ? '/static/reports/daily_group_reports.json' 
         : '/static/reports/recent_reports.json';
 
     const timestamp = new Date().getTime();
