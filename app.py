@@ -218,9 +218,10 @@ def search_reports():
     keyword = request.args.get('keyword', '').strip()
     offset = int(request.args.get('offset', 0))
     limit = int(request.args.get('limit', 30))
+    last_id = int(request.args.get('last_id', 0))
 
     db = SQLiteManagerSQL()
-    rows = db.search_reports_by_keyword(keyword, offset, limit)  # 키워드로 데이터베이스 검색
+    rows = db.search_reports_by_keyword(keyword, last_id, offset, limit)  # 키워드로 데이터베이스 검색
     rows = rows[offset:offset + limit]
 
     paginated_results = defaultdict(lambda: defaultdict(list))
