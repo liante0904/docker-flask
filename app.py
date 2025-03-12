@@ -1,5 +1,4 @@
 from flask import Flask, send_from_directory, render_template, jsonify, request , make_response
-from flask_talisman import Talisman
 from flask_compress import Compress
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
@@ -24,9 +23,6 @@ csp = {
     'script-src': ['\'self\'', '\'unsafe-inline\''],
 }
 
-Talisman(app, content_security_policy=csp, force_https=True)
-
-    
 scheduler = BackgroundScheduler()
 
 # 캐시 초기화
