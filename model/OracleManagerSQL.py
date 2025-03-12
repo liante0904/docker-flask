@@ -86,25 +86,30 @@ class OracleManagerSQL:
         results = self.cursor.fetchall()
         return [dict(zip(columns, row)) for row in results]
 
-    def search_reports_by_keyword(self, keyword, last_id, offset=0, limit=30):
+    def search_reports_by_keyword(self, keyword, last_id, limit=30):
         """
         키워드로 레포트를 검색하고 페이징 처리합니다.
         """
         
         query = """
             SELECT id, ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
-            FROM data_main_daily_send
-            WHERE CONTAINS(ARTICLE_TITLE, :1, 1) > 0
-            AND (:2 = 0 OR id < :3)
-            ORDER BY id DESC
-            FETCH FIRST :4 ROWS ONLY
+            FROM (
+                SELECT id, ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
+                FROM data_main_daily_send
+                WHERE CONTAINS(ARTICLE_TITLE, :keyword, 1) > 0
+                AND id < NVL(:last_id, (SELECT MAX(id) FROM data_main_daily_send))
+                ORDER BY id DESC
+            )
+            WHERE ROWNUM <= :limit
         """
-        params = [keyword, last_id, last_id, limit]
 
+        keyword_pattern = f"%{keyword}%"
+        params = {"keyword": keyword_pattern, "last_id": last_id, "limit": limit}
 
         self.cursor.execute(query, params)
         columns = [col[0] for col in self.cursor.description]
         results = self.cursor.fetchall()
+
         return [dict(zip(columns, row)) for row in results]
 
     def fetch_global_articles_by_todate(self, firm_info=None, date_str=None):
