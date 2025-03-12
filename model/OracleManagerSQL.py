@@ -105,16 +105,7 @@ class OracleManagerSQL:
         self.cursor.execute(query, params)
         columns = [col[0] for col in self.cursor.description]
         results = self.cursor.fetchall()
-        # LOB 객체를 문자열로 변환
-        processed_results = []
-        for row in results:
-            row_dict = dict(zip(columns, row))
-            for key, value in row_dict.items():
-                if isinstance(value, oracledb.LOB):
-                    row_dict[key] = value.read() if value else None  # LOB 데이터를 읽음
-            processed_results.append(row_dict)
-
-        return processed_results
+        return [dict(zip(columns, row)) for row in results]
 
     def fetch_global_articles_by_todate(self, firm_info=None, date_str=None):
         """Fetch articles by date."""
