@@ -92,14 +92,14 @@ class OracleManagerSQL:
         """
 
         query = """
-            SELECT "id", ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
+            SELECT REPORT_ID, ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
             FROM data_main_daily_send
             WHERE CONTAINS(ARTICLE_TITLE, :keyword, 1) > 0
             AND (
-                (:last_id = 0 AND "id" > 0) OR
-                (:last_id > 0 AND "id" < :last_id)
+                (:last_id = 0 AND REPORT_ID > 0) OR
+                (:last_id > 0 AND REPORT_ID < :last_id)
             )
-            ORDER BY "id" DESC
+            ORDER BY REPORT_ID DESC
             FETCH FIRST :limit ROWS ONLY
         """
 
