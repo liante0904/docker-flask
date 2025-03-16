@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     volumes:
       - ${HOME}/sqlite3:/app/sqlite3  # 호스트의 sqlite3 폴더를 컨테이너에 연결
-      - ${HOME}/wallet:/app/wallet  wallet
+      - ${HOME}/wallet:/app/wallet  #wallet
       - ./static:/app/static  # 프로젝트 폴더의 static 디렉토리를 컨테이너에 연결
     environment:
       - PDF_FOLDER=/app/pdf
