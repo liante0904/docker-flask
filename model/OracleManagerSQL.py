@@ -86,7 +86,7 @@ class OracleManagerSQL:
         results = self.cursor.fetchall()
         return [dict(zip(columns, row)) for row in results]
 
-    def search_reports_by_keyword(self, keyword, last_id, limit=30):
+    def search_reports_by_keyword(self, keyword, last_id, offset, limit=30):
         """
         키워드로 레포트를 검색하고 페이징 처리합니다.
         """
