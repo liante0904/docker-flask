@@ -7,6 +7,7 @@ import os
 import json
 import time
 from model.SQLiteManager import SQLiteManagerSQL
+from model.OracleManagerSQL import OracleManagerSQL
 from dotenv import load_dotenv
 
 # 환경 변수 로드
@@ -216,7 +217,7 @@ def search_reports():
     limit = int(request.args.get('limit', 30))
     last_id = int(request.args.get('last_id', 0))
 
-    db = SQLiteManagerSQL()
+    db = OracleManagerSQL()
     rows = db.search_reports_by_keyword(keyword, last_id, offset, limit)  # 키워드로 데이터베이스 검색
     rows = rows[offset:offset + limit]
 
