@@ -90,27 +90,32 @@ class OracleManagerSQL:
         """
         키워드로 레포트를 검색하고 페이징 처리합니다.
         """
-        
+
         query = """
-            SELECT id, ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
-            FROM (
-                SELECT id, ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
-                FROM data_main_daily_send
-                WHERE CONTAINS(ARTICLE_TITLE, :keyword, 1) > 0
-                AND id < NVL(:last_id, (SELECT MAX(id) FROM data_main_daily_send))
-                ORDER BY id DESC
+            SELECT "id", ARTICLE_TITLE, TELEGRAM_URL, WRITER, SAVE_TIME, FIRM_NM
+            FROM data_main_daily_send
+            WHERE CONTAINS(ARTICLE_TITLE, :keyword, 1) > 0
+            AND (
+                (:last_id = 0 AND "id" > 0) OR
+                (:last_id > 0 AND "id" < :last_id)
             )
-            WHERE ROWNUM <= :limit
+            ORDER BY "id" DESC
+            FETCH FIRST :limit ROWS ONLY
         """
 
-        keyword_pattern = f"%{keyword}%"
-        params = {"keyword": keyword_pattern, "last_id": last_id, "limit": limit}
+        params = {"last_id": last_id, "limit": limit, "keyword": keyword}
+
+        print("Executing Query:", query)
+        print("With Parameters:", params)
 
         self.cursor.execute(query, params)
         columns = [col[0] for col in self.cursor.description]
         results = self.cursor.fetchall()
 
+        print("Fetched Results:", results)
+
         return [dict(zip(columns, row)) for row in results]
+
 
     def fetch_global_articles_by_todate(self, firm_info=None, date_str=None):
         """Fetch articles by date."""
@@ -158,7 +163,7 @@ if __name__ == "__main__":
     db = OracleManagerSQL()
 
     # Fetch data
-    rows = db.fetch_daily_articles_by_date()
+    rows = db.search_reports_by_keyword("삼성전자", 0, 100)
     print(rows)
 
     db.close_connection()
