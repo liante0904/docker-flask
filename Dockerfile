@@ -1,5 +1,5 @@
 # Python 이미지 기반
-FROM python:3.10-slim
+FROM ghcr.io/astral-sh/uv:python3.10-slim
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y curl vim && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt /app/
 
 # 종속성 설치
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock .
+RUN uv sync --frozen
 
 # 애플리케이션 및 관련 파일 복사
 COPY . .
