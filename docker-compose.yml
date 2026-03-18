@@ -1,4 +1,21 @@
 services:
+  nginx:
+    container_name: nginx
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./static:/app/static:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - flask
+    networks:
+      - flask
+
   flask:
     container_name: flask
     build:
@@ -8,16 +25,16 @@ services:
       - "5000:5000"
     restart: unless-stopped
     volumes:
-      - ${HOME}/sqlite3:/app/sqlite3  # 호스트의 sqlite3 폴더를 컨테이너에 연결
-      - ${HOME}/wallet:/app/wallet  #wallet
-      - ./static:/app/static  # 프로젝트 폴더의 static 디렉토리를 컨테이너에 연결
+      - ${HOME}/sqlite3:/app/sqlite3
+      - ${HOME}/wallet:/app/wallet
+      - ./static:/app/static
     environment:
       - PDF_FOLDER=/app/pdf
-      - DB_FOLDER=/app/sqlite3  # 환경 변수도 sqlite3 폴더로 변경
-      - TZ=Asia/Seoul  # 타임존 설정
+      - DB_FOLDER=/app/sqlite3
+      - TZ=Asia/Seoul
     networks:
-      - flask  # flask 네트워크에 연결
+      - flask
 
 networks:
   flask:
-    driver: bridge  # 동일한 네트워크에 두 서비스를 연결
+    driver: bridge
