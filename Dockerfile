@@ -28,8 +28,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # 포트 열기
 EXPOSE 5000
 
-# Gunicorn 실행
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "60", "--keep-alive", "75", "app:app"]
+# Gunicorn 실행 (uv run을 통해 가상환경 내의 gunicorn 호출)
+CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "60", "--keep-alive", "75", "app:app"]
 
 # CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--keep-alive", "75", "app:app"]
 
