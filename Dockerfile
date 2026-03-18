@@ -1,11 +1,11 @@
-# Python 이미지 기반
-FROM ghcr.io/astral-sh/uv:python3.10-slim
+# Python 이미지 기반 (pyproject.toml의 >=3.12 요구 사항 준수)
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# 필수 패키지 설치 (curl, vim 추가)
-RUN apt-get update && apt-get install -y curl vim && rm -rf /var/lib/apt/lists/*
+# 필수 패키지 설치 (Oracle Client를 위해 libaio1 추가)
+RUN apt-get update && apt-get install -y curl vim libaio1 && rm -rf /var/lib/apt/lists/*
 
 # 필요한 파일 복사
 COPY requirements.txt /app/
