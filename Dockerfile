@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y curl vim libaio1 && rm -rf /var/lib/apt
 COPY requirements.txt /app/
 
 # 종속성 설치
-COPY pyproject.toml uv.lock .
+COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen
 
 # 애플리케이션 및 관련 파일 복사
